@@ -1,0 +1,29 @@
+name: Build mod
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip the project
+        run: |
+          mkdir -p project
+          unzip -oq "$(ls -t *.zip | head -n 1)" -d project
+          dir=$(dirname "$(find project -name build.gradle | head -n 1)")
+          echo "PROJECT_DIR=$dir" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.1.1
+      - name: Build
+        run: gradle build --no-daemon
+        working-directory: ${{ env.PROJECT_DIR }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheCreator-jar
+          path: ${{ env.PROJECT_DIR }}/build/libs/*.jar
